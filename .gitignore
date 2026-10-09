@@ -21,7 +21,8 @@ cache/
 manifests/*.csv
 
 # --- Model artifacts and experiment outputs ---
-models/
+models/*
+!models/README.md
 checkpoints/
 *.pt
 *.pth
@@ -33,6 +34,7 @@ checkpoints/
 *.safetensors
 runs/
 mlruns/
+catboost_info/
 wandb/
 # Per-image outputs carry dataset Hb values -> keep out of Git.
 # Aggregate metrics only may be committed.
@@ -42,6 +44,9 @@ outputs/*
 !outputs/cnn_metrics.json
 !outputs/cnn_cv_results.json
 !outputs/shortcut_diagnostic.json
+!outputs/classical_cv_results.json
+!outputs/classical_metrics.json
+!outputs/boosting_cv_results.json
 
 # --- Secrets ---
 .env

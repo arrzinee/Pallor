@@ -1,0 +1,115 @@
+{
+  "status": "Research experiment on a small dataset. NOT clinically validated.",
+  "one_shot": "Test set scored once with the configuration frozen by classical_select.py.",
+  "caveats": [
+    "No patient identifiers: images from the same person may appear in both train and test.",
+    "Small test set (n=51); see the bootstrap 95% CIs.",
+    "Dataset licence and provenance pending verification (docs/DATASET.md)."
+  ],
+  "test_counts": {
+    "n": 51,
+    "n_anemic": 22,
+    "n_non_anemic": 29
+  },
+  "candidate": "extra_trees",
+  "candidate_params": {
+    "max_depth": null,
+    "max_features": "sqrt",
+    "min_samples_leaf": 1.0
+  },
+  "candidate_metrics": {
+    "threshold": 0.44,
+    "score_type": "predict_proba",
+    "roc_auc": 0.8002,
+    "sensitivity": 0.6818,
+    "specificity": 0.7586,
+    "precision": 0.6818,
+    "f1": 0.6818,
+    "accuracy": 0.7255,
+    "confusion_matrix": {
+      "tp": 15,
+      "fn": 7,
+      "fp": 7,
+      "tn": 22
+    },
+    "ci95_bootstrap": {
+      "roc_auc": [
+        0.6677,
+        0.9138
+      ],
+      "sensitivity": [
+        0.5,
+        0.8636
+      ],
+      "specificity": [
+        0.5862,
+        0.8966
+      ],
+      "precision": [
+        0.5357,
+        0.85
+      ],
+      "f1": [
+        0.5217,
+        0.8182
+      ],
+      "accuracy": [
+        0.6078,
+        0.8431
+      ]
+    }
+  },
+  "baseline_lr": {
+    "roc_auc": 0.7241,
+    "sensitivity": 0.7273,
+    "specificity": 0.6897,
+    "precision": 0.64,
+    "f1": 0.6809,
+    "accuracy": 0.7059,
+    "confusion_matrix": {
+      "tp": 16,
+      "fn": 6,
+      "fp": 9,
+      "tn": 20
+    }
+  },
+  "paired_difference_candidate_minus_lr": {
+    "roc_auc": 0.076,
+    "sensitivity": -0.0455,
+    "specificity": 0.069,
+    "precision": 0.0418,
+    "f1": 0.001,
+    "accuracy": 0.0196,
+    "ci95_paired_bootstrap": {
+      "roc_auc": [
+        -0.0627,
+        0.2194
+      ],
+      "sensitivity": [
+        -0.2273,
+        0.1364
+      ],
+      "specificity": [
+        -0.1034,
+        0.2414
+      ],
+      "precision": [
+        -0.1119,
+        0.1933
+      ],
+      "f1": [
+        -0.1489,
+        0.1418
+      ],
+      "accuracy": [
+        -0.098,
+        0.1373
+      ]
+    }
+  },
+  "adoption_rule": "adopt over LR only if candidate beat LR in nested CV AND paired test \u0394AUC 95% CI > 0",
+  "candidate_beat_lr_in_cv": true,
+  "candidate_adopted": false,
+  "primary_model": "baseline_colour (logistic regression on colour features)",
+  "n_bootstrap": 2000
+}

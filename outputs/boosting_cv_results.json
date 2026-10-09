@@ -1,0 +1,395 @@
+{
+  "scope": "training split only (n=200); held-out test set NOT used; no final model fitted",
+  "protocol": "same as classical_select.py (35 features, same 25 outer folds, inner 5-fold grid search)",
+  "fold_identity_check": "passed (LR per-fold AUCs reproduced exactly)",
+  "versions": {
+    "xgboost": "3.4.1",
+    "catboost": "1.2.10"
+  },
+  "class_weighting": "none (AUC is threshold-free)",
+  "models": {
+    "xgboost": {
+      "nested_cv_auc_mean": 0.7237691492934459,
+      "nested_cv_auc_std": 0.07295801926249255,
+      "per_fold_auc": [
+        0.7045,
+        0.6995,
+        0.7348,
+        0.5524,
+        0.8133,
+        0.596,
+        0.7677,
+        0.7677,
+        0.757,
+        0.7468,
+        0.6843,
+        0.7753,
+        0.6717,
+        0.8133,
+        0.7289,
+        0.7374,
+        0.596,
+        0.7374,
+        0.7315,
+        0.9054,
+        0.7803,
+        0.7121,
+        0.6667,
+        0.7289,
+        0.6854
+      ],
+      "grid": {
+        "n_estimators": [
+          100.0,
+          300.0
+        ],
+        "max_depth": [
+          2.0,
+          3.0
+        ],
+        "learning_rate": [
+          0.03,
+          0.1
+        ]
+      },
+      "inner_selected_params_per_outer_fold": [
+        {
+          "learning_rate": 0.03,
+          "max_depth": 3.0,
+          "n_estimators": 300.0
+        },
+        {
+          "learning_rate": 0.03,
+          "max_depth": 3.0,
+          "n_estimators": 300.0
+        },
+        {
+          "learning_rate": 0.1,
+          "max_depth": 2.0,
+          "n_estimators": 100.0
+        },
+        {
+          "learning_rate": 0.03,
+          "max_depth": 2.0,
+          "n_estimators": 100.0
+        },
+        {
+          "learning_rate": 0.1,
+          "max_depth": 2.0,
+          "n_estimators": 100.0
+        },
+        {
+          "learning_rate": 0.1,
+          "max_depth": 3.0,
+          "n_estimators": 100.0
+        },
+        {
+          "learning_rate": 0.03,
+          "max_depth": 3.0,
+          "n_estimators": 300.0
+        },
+        {
+          "learning_rate": 0.1,
+          "max_depth": 2.0,
+          "n_estimators": 100.0
+        },
+        {
+          "learning_rate": 0.03,
+          "max_depth": 2.0,
+          "n_estimators": 100.0
+        },
+        {
+          "learning_rate": 0.03,
+          "max_depth": 2.0,
+          "n_estimators": 100.0
+        },
+        {
+          "learning_rate": 0.1,
+          "max_depth": 2.0,
+          "n_estimators": 100.0
+        },
+        {
+          "learning_rate": 0.03,
+          "max_depth": 2.0,
+          "n_estimators": 100.0
+        },
+        {
+          "learning_rate": 0.03,
+          "max_depth": 3.0,
+          "n_estimators": 300.0
+        },
+        {
+          "learning_rate": 0.03,
+          "max_depth": 2.0,
+          "n_estimators": 100.0
+        },
+        {
+          "learning_rate": 0.03,
+          "max_depth": 2.0,
+          "n_estimators": 100.0
+        },
+        {
+          "learning_rate": 0.1,
+          "max_depth": 2.0,
+          "n_estimators": 100.0
+        },
+        {
+          "learning_rate": 0.03,
+          "max_depth": 3.0,
+          "n_estimators": 100.0
+        },
+        {
+          "learning_rate": 0.1,
+          "max_depth": 2.0,
+          "n_estimators": 100.0
+        },
+        {
+          "learning_rate": 0.03,
+          "max_depth": 2.0,
+          "n_estimators": 100.0
+        },
+        {
+          "learning_rate": 0.03,
+          "max_depth": 3.0,
+          "n_estimators": 300.0
+        },
+        {
+          "learning_rate": 0.03,
+          "max_depth": 3.0,
+          "n_estimators": 100.0
+        },
+        {
+          "learning_rate": 0.03,
+          "max_depth": 2.0,
+          "n_estimators": 300.0
+        },
+        {
+          "learning_rate": 0.1,
+          "max_depth": 3.0,
+          "n_estimators": 100.0
+        },
+        {
+          "learning_rate": 0.1,
+          "max_depth": 3.0,
+          "n_estimators": 100.0
+        },
+        {
+          "learning_rate": 0.03,
+          "max_depth": 3.0,
+          "n_estimators": 300.0
+        }
+      ],
+      "diagnostic_without_n_tissue_px": {
+        "nested_cv_auc_mean": 0.7074628639334523,
+        "nested_cv_auc_std": 0.06067412534005498
+      },
+      "paired_vs": {
+        "logistic_regression": {
+          "mean_delta_auc": 0.005657149293445975,
+          "sd_delta_auc": 0.07195894058567572,
+          "folds_better": 14,
+          "n_folds": 25
+        },
+        "extra_trees": {
+          "mean_delta_auc": -0.06488285070655403,
+          "sd_delta_auc": 0.04591862989464258,
+          "folds_better": 2,
+          "n_folds": 25
+        }
+      },
+      "runtime_s": 23.5
+    },
+    "catboost": {
+      "nested_cv_auc_mean": 0.7623999586659435,
+      "nested_cv_auc_std": 0.0711321697996661,
+      "per_fold_auc": [
+        0.7374,
+        0.7753,
+        0.8081,
+        0.6036,
+        0.8542,
+        0.6086,
+        0.8207,
+        0.7753,
+        0.7596,
+        0.688,
+        0.7525,
+        0.8485,
+        0.7045,
+        0.8849,
+        0.7289,
+        0.7475,
+        0.7222,
+        0.7601,
+        0.7519,
+        0.8977,
+        0.7854,
+        0.7424,
+        0.7197,
+        0.844,
+        0.7391
+      ],
+      "grid": {
+        "iterations": [
+          200.0,
+          500.0
+        ],
+        "depth": [
+          3.0,
+          5.0
+        ],
+        "learning_rate": [
+          0.03,
+          0.1
+        ]
+      },
+      "inner_selected_params_per_outer_fold": [
+        {
+          "depth": 5.0,
+          "iterations": 200.0,
+          "learning_rate": 0.1
+        },
+        {
+          "depth": 5.0,
+          "iterations": 500.0,
+          "learning_rate": 0.1
+        },
+        {
+          "depth": 5.0,
+          "iterations": 200.0,
+          "learning_rate": 0.1
+        },
+        {
+          "depth": 3.0,
+          "iterations": 200.0,
+          "learning_rate": 0.03
+        },
+        {
+          "depth": 5.0,
+          "iterations": 200.0,
+          "learning_rate": 0.03
+        },
+        {
+          "depth": 3.0,
+          "iterations": 500.0,
+          "learning_rate": 0.1
+        },
+        {
+          "depth": 5.0,
+          "iterations": 200.0,
+          "learning_rate": 0.1
+        },
+        {
+          "depth": 5.0,
+          "iterations": 200.0,
+          "learning_rate": 0.1
+        },
+        {
+          "depth": 5.0,
+          "iterations": 500.0,
+          "learning_rate": 0.1
+        },
+        {
+          "depth": 5.0,
+          "iterations": 500.0,
+          "learning_rate": 0.03
+        },
+        {
+          "depth": 5.0,
+          "iterations": 500.0,
+          "learning_rate": 0.03
+        },
+        {
+          "depth": 3.0,
+          "iterations": 200.0,
+          "learning_rate": 0.03
+        },
+        {
+          "depth": 5.0,
+          "iterations": 500.0,
+          "learning_rate": 0.1
+        },
+        {
+          "depth": 5.0,
+          "iterations": 200.0,
+          "learning_rate": 0.03
+        },
+        {
+          "depth": 5.0,
+          "iterations": 200.0,
+          "learning_rate": 0.03
+        },
+        {
+          "depth": 5.0,
+          "iterations": 500.0,
+          "learning_rate": 0.03
+        },
+        {
+          "depth": 5.0,
+          "iterations": 200.0,
+          "learning_rate": 0.03
+        },
+        {
+          "depth": 5.0,
+          "iterations": 200.0,
+          "learning_rate": 0.03
+        },
+        {
+          "depth": 5.0,
+          "iterations": 200.0,
+          "learning_rate": 0.03
+        },
+        {
+          "depth": 5.0,
+          "iterations": 200.0,
+          "learning_rate": 0.1
+        },
+        {
+          "depth": 5.0,
+          "iterations": 500.0,
+          "learning_rate": 0.03
+        },
+        {
+          "depth": 5.0,
+          "iterations": 200.0,
+          "learning_rate": 0.1
+        },
+        {
+          "depth": 5.0,
+          "iterations": 200.0,
+          "learning_rate": 0.03
+        },
+        {
+          "depth": 5.0,
+          "iterations": 200.0,
+          "learning_rate": 0.1
+        },
+        {
+          "depth": 5.0,
+          "iterations": 200.0,
+          "learning_rate": 0.03
+        }
+      ],
+      "diagnostic_without_n_tissue_px": {
+        "nested_cv_auc_mean": 0.749188560799814,
+        "nested_cv_auc_std": 0.05578592274479135
+      },
+      "paired_vs": {
+        "logistic_regression": {
+          "mean_delta_auc": 0.04428795866594332,
+          "sd_delta_auc": 0.07503568886059003,
+          "folds_better": 20,
+          "n_folds": 25
+        },
+        "extra_trees": {
+          "mean_delta_auc": -0.026252041334056685,
+          "sd_delta_auc": 0.03108308876202594,
+          "folds_better": 6,
+          "n_folds": 25
+        }
+      },
+      "runtime_s": 295.9
+    }
+  },
+  "runtime_s": 341.5
+}
