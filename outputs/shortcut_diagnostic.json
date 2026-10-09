@@ -1,0 +1,24 @@
+{
+  "scope": "training split only (n=200), RepeatedStratifiedKFold(5,5,seed=42)",
+  "variants": {
+    "all_35_features (frozen baseline)": {
+      "auc_mean": 0.7406,
+      "auc_std": 0.0785,
+      "selected_C": 100.0
+    },
+    "colour_only (drop n_tissue_px)": {
+      "auc_mean": 0.7403,
+      "auc_std": 0.0684,
+      "selected_C": 100.0
+    },
+    "n_tissue_px_only": {
+      "auc_mean": 0.6476,
+      "auc_std": 0.0925,
+      "selected_C": 0.001
+    }
+  },
+  "median_tissue_px": {
+    "anemic": 3745.0,
+    "non_anemic": 4430.0
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "status": "Research experiment on a small dataset. NOT clinically validated.",
+  "one_shot": "Test set scored once with the configuration frozen by cnn_select.py.",
+  "caveats": [
+    "No patient identifiers: images from the same person may appear in both train and test, which would make test metrics optimistic for both models.",
+    "Small test set (n=51); see the bootstrap 95% CIs.",
+    "Dataset licence and provenance pending verification (docs/DATASET.md)."
+  ],
+  "test_counts": {
+    "n": 51,
+    "n_anemic": 22,
+    "n_non_anemic": 29
+  },
+  "chosen_cnn": "F-mobilenet_v3_large",
+  "cnn": {
+    "threshold": 0.5334672927856445,
+    "roc_auc": 0.6599,
+    "sensitivity": 0.3636,
+    "specificity": 0.7586,
+    "precision": 0.5333,
+    "f1": 0.4324,
+    "accuracy": 0.5882,
+    "confusion_matrix": {
+      "tp": 8,
+      "fn": 14,
+      "fp": 7,
+      "tn": 22
+    },
+    "ci95_bootstrap": {
+      "roc_auc": [
+        0.5078,
+        0.8025
+      ],
+      "sensitivity": [
+        0.1818,
+        0.5909
+      ],
+      "specificity": [
+        0.5862,
+        0.8966
+      ],
+      "precision": [
+        0.3077,
+        0.75
+      ],
+      "f1": [
+        0.2286,
+        0.619
+      ],
+      "accuracy": [
+        0.451,
+        0.7059
+      ]
+    }
+  },
+  "baseline_colour": {
+    "roc_auc": 0.7241,
+    "sensitivity": 0.7273,
+    "specificity": 0.6897,
+    "precision": 0.64,
+    "f1": 0.6809,
+    "accuracy": 0.7059,
+    "confusion_matrix": {
+      "tp": 16,
+      "fn": 6,
+      "fp": 9,
+      "tn": 20
+    }
+  },
+  "paired_difference_cnn_minus_baseline": {
+    "roc_auc": -0.0643,
+    "sensitivity": -0.3636,
+    "specificity": 0.069,
+    "precision": -0.1067,
+    "f1": -0.2484,
+    "accuracy": -0.1176,
+    "ci95_paired_bootstrap": {
+      "roc_auc": [
+        -0.2571,
+        0.1285
+      ],
+      "sensitivity": [
+        -0.5909,
+        -0.1364
+      ],
+      "specificity": [
+        -0.069,
+        0.2414
+      ],
+      "precision": [
+        -0.3164,
+        0.094
+      ],
+      "f1": [
+        -0.4531,
+        -0.0506
+      ],
+      "accuracy": [
+        -0.2549,
+        0.0196
+      ]
+    }
+  },
+  "adoption_rule": "CNN adopted only if it beat the baseline in training CV AND the paired test \u0394AUC 95% CI lower bound > 0",
+  "cnn_beat_baseline_in_cv": false,
+  "cnn_adopted": false,
+  "primary_model": "baseline_colour (logistic regression on colour features)",
+  "n_bootstrap": 2000
+}

@@ -1,0 +1,56 @@
+# --- Python / environment ---
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Raw dataset (never commit; licence/provenance unverified, health-related data) ---
+data/
+*.xlsx
+*.xls
+*.csv.gz
+
+# --- Derived data that contains or reproduces dataset content ---
+derived/
+processed/
+cache/
+manifests/*.csv
+
+# --- Model artifacts and experiment outputs ---
+models/
+checkpoints/
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.joblib
+*.pkl
+*.h5
+*.safetensors
+runs/
+mlruns/
+wandb/
+# Per-image outputs carry dataset Hb values -> keep out of Git.
+# Aggregate metrics only may be committed.
+outputs/*
+!outputs/metrics.json
+!outputs/cv_results.json
+!outputs/cnn_metrics.json
+!outputs/cnn_cv_results.json
+!outputs/shortcut_diagnostic.json
+
+# --- Secrets ---
+.env
+.env.*
+*.key
+*.pem
+secrets/
+
+# --- OS / editor ---
+.DS_Store
+.vscode/
+.idea/

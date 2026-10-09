@@ -1,0 +1,138 @@
+{
+  "status": "Research baseline on a small dataset. NOT clinically validated.",
+  "caveats": [
+    "No patient identifiers: multiple images from one person may fall in both train and test, which would make these test metrics optimistic.",
+    "Test set is small (n=51); see the 95% bootstrap CIs.",
+    "Dataset licence and provenance pending verification (docs/DATASET.md)."
+  ],
+  "splits": {
+    "train": {
+      "n": 200,
+      "n_anemic": 88,
+      "n_non_anemic": 112,
+      "frac_anemic": 0.44,
+      "hb_mean": 10.998,
+      "hb_min": 4.2,
+      "hb_max": 15.0
+    },
+    "test": {
+      "n": 51,
+      "n_anemic": 22,
+      "n_non_anemic": 29,
+      "frac_anemic": 0.431,
+      "hb_mean": 11.045,
+      "hb_min": 5.9,
+      "hb_max": 14.9
+    }
+  },
+  "cross_validation_on_train": {
+    "scheme": "RepeatedStratifiedKFold(5 splits x 5 repeats) on training split only",
+    "classification": {
+      "model": "StandardScaler + LogisticRegression(class_weight=balanced)",
+      "selected_C": 100.0,
+      "cv_auc_mean": 0.740588751969826,
+      "cv_auc_std": 0.07854272867148905,
+      "threshold": 0.5021236611413716,
+      "threshold_rule": "max Youden J on 5-fold OOF training probabilities"
+    },
+    "regression": {
+      "model": "StandardScaler + Ridge",
+      "selected_alpha": 1.0,
+      "cv_mae_mean": 1.5923405829703825,
+      "cv_mae_std": 0.11453102367779686,
+      "baseline_cv_mae_mean": 1.71719825,
+      "baseline_cv_mae_std": 0.04151166791058572
+    }
+  },
+  "test": {
+    "classification": {
+      "label": "anemic = Hb < 11.0 g/dL; positive class = anemic",
+      "threshold": 0.5021236611413716,
+      "roc_auc": 0.7241,
+      "sensitivity": 0.7273,
+      "specificity": 0.6897,
+      "precision": 0.64,
+      "f1": 0.6809,
+      "accuracy": 0.7059,
+      "confusion_matrix": {
+        "tp": 16,
+        "fn": 6,
+        "fp": 9,
+        "tn": 20
+      },
+      "ci95_bootstrap": {
+        "roc_auc": [
+          0.5674,
+          0.8652
+        ],
+        "sensitivity": [
+          0.5455,
+          0.9091
+        ],
+        "specificity": [
+          0.5172,
+          0.8621
+        ],
+        "precision": [
+          0.5,
+          0.7917
+        ],
+        "f1": [
+          0.5333,
+          0.8085
+        ],
+        "accuracy": [
+          0.5686,
+          0.8235
+        ]
+      }
+    },
+    "regression": {
+      "units": "g/dL",
+      "baseline": "predict training-set mean Hb (10.998 g/dL)",
+      "mae": 1.6392,
+      "rmse": 2.1007,
+      "r2": -0.0358,
+      "baseline_mae": 1.6929,
+      "mae_improvement_vs_baseline": 0.0536,
+      "pearson_r": 0.1752,
+      "ci95_bootstrap": {
+        "mae": [
+          1.2897,
+          2.0168
+        ],
+        "rmse": [
+          1.6582,
+          2.5202
+        ],
+        "r2": [
+          -0.3857,
+          0.183
+        ],
+        "baseline_mae": [
+          1.3677,
+          2.0285
+        ],
+        "mae_improvement_vs_baseline": [
+          -0.1534,
+          0.2594
+        ],
+        "pearson_r": [
+          -0.1393,
+          0.4668
+        ]
+      }
+    },
+    "secondary_regression_thresholded_at_11": {
+      "note": "Context only; not used for model selection.",
+      "roc_auc": 0.6552,
+      "sensitivity": 0.5909,
+      "specificity": 0.6552,
+      "precision": 0.5652,
+      "f1": 0.5778,
+      "accuracy": 0.6275
+    }
+  },
+  "n_bootstrap": 2000,
+  "seed": 42
+}
