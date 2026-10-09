@@ -7,6 +7,8 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.gradio/
+*.log
 
 # --- Raw dataset (never commit; licence/provenance unverified, health-related data) ---
 data/
@@ -47,6 +49,9 @@ outputs/*
 !outputs/classical_cv_results.json
 !outputs/classical_metrics.json
 !outputs/boosting_cv_results.json
+
+# --- Private personal notes (journal, verbatim prompts); never publish ---
+/private-notes/
 
 # --- Secrets ---
 .env
