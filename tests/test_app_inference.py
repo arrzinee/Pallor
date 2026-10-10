@@ -391,3 +391,19 @@ def test_synthetic_detection_uses_content_not_filename(tmp_path):
     assert not app.is_synthetic(str(renamed), hashes)
     real_style = visible_text(app.make_handler(app.load_results(), hashes)(str(renamed))[1])
     assert "Synthetic" not in real_style and ("anaemic-labelled" in real_style or "Did not cross" in real_style)
+
+
+# --- deployment launch settings -------------------------------------------------
+
+def test_launch_settings_stay_local_unless_on_render():
+    local = app.launch_settings({})
+    assert (local["server_name"], local["server_port"], local["share"]) == ("127.0.0.1", 7860, False)
+    with_port = app.launch_settings({"PORT": "10000"})          # PORT alone must not expose the app
+    assert (with_port["server_name"], with_port["server_port"]) == ("127.0.0.1", 10000)
+
+
+def test_launch_settings_on_render_bind_all_interfaces_without_share():
+    render = app.launch_settings({"RENDER": "true", "PORT": "10000"})
+    assert (render["server_name"], render["server_port"], render["share"]) == ("0.0.0.0", 10000, False)
+    assert render["enable_monitoring"] is False and render["mcp_server"] is False
+    assert app.launch_settings({"RENDER": "false"})["server_name"] == "127.0.0.1"

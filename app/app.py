@@ -1,9 +1,10 @@
-"""Pallor local research app (Gradio). Logistic-regression baseline only.
+"""Pallor research app (Gradio). Logistic-regression baseline only.
 
 Run:  .venv/bin/python app/app.py      -> http://127.0.0.1:7860
 
-Local-only by design: bound to 127.0.0.1, no share link, Gradio analytics off,
-system fonts only (no web-font requests). No dataset images, Hb values or
+Local by default: bound to 127.0.0.1. On Render (RENDER=true) it binds 0.0.0.0 on $PORT so the
+platform can route traffic (see launch_settings). No share link in any environment, Gradio
+analytics off, system fonts only (no web-font requests). No dataset images, Hb values or
 per-image predictions are displayed: the dataset's licence and sharing
 permission are unresolved. Every metric shown is read at runtime from the
 tracked aggregate result files in outputs/. This module only changes
@@ -240,7 +241,8 @@ GLOBAL_NOTE = ("Pallor is an experimental research prototype — not a diagnosis
 def placeholder_card():
     return ('<div class="p-card p-placeholder"><p class="p-state-title">No image analysed yet</p>'
             '<p>Upload a supported PNG on the left, then select <strong>Analyse image</strong>. '
-            'Images are processed on this computer only.</p></div>')
+            'Images are analysed by the computer running Pallor; when Pallor is hosted online, '
+            'that is a remote server, not your device.</p></div>')
 
 
 def ready_card(synthetic=False):
@@ -968,6 +970,18 @@ LAUNCH_KWARGS = {"server_name": "127.0.0.1", "server_port": 7860, "share": False
                  "theme": THEME, "css": CSS, "footer_links": [], "js": FORCE_LIGHT_JS}
 
 
+def launch_settings(env=os.environ):
+    """Launch arguments for the current environment.
+
+    Locally: 127.0.0.1 (unchanged local-only default). On Render, which always sets RENDER=true, bind 0.0.0.0
+    so the platform can route traffic. The port comes from PORT (Render's assigned port), defaulting to 7860.
+    Public share links stay disabled in every environment.
+    """
+    on_render = env.get("RENDER") == "true"
+    return {**LAUNCH_KWARGS, "server_name": "0.0.0.0" if on_render else "127.0.0.1",
+            "server_port": int(env.get("PORT", "7860")), "share": False}
+
+
 def busy_state():
     return gr.update(value="Analysing…", interactive=False), LOADING_CARD
 
@@ -1100,9 +1114,11 @@ def build_app(results=None, example_dir=None):
 
 
 def main():
+    settings = launch_settings()
+    assert settings["share"] is False
+    assert settings["server_name"] == ("0.0.0.0" if os.environ.get("RENDER") == "true" else "127.0.0.1")
     demo = build_app()
-    assert LAUNCH_KWARGS["server_name"] == "127.0.0.1" and LAUNCH_KWARGS["share"] is False
-    demo.launch(**LAUNCH_KWARGS)
+    demo.launch(**settings)
 
 
 if __name__ == "__main__":

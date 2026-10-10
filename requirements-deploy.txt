@@ -1,0 +1,13 @@
+# Minimal runtime dependencies for deploying the Pallor app (e.g. Render).
+# Only what app/ imports at runtime, plus what is needed to load the saved
+# scikit-learn model. The research-only packages in requirements.txt
+# (torch, torchvision, xgboost, catboost, openpyxl) are not needed here.
+# scikit-learn must stay at 1.9.1: the saved model was created with it.
+gradio==6.30.0
+scikit-learn==1.9.1
+numpy==2.5.3
+pandas==3.0.6
+pillow==12.3.0
+joblib==1.6.0
+scipy==1.18.1
+threadpoolctl==3.7.0

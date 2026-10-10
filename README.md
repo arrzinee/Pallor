@@ -101,8 +101,10 @@ because a code-generated image has no medical meaning.
    seen in the 200 training images, the result is flagged *"treat this result as unreliable"*.
 7. **Presentation:** a plain-language result first, then secondary technical details.
 
-The app never retrains anything, and it runs locally only: bound to `127.0.0.1:7860`, no share link, Gradio
-analytics disabled, and system fonts only, so no external font requests.
+The app never retrains anything. By default it runs locally, bound to `127.0.0.1:7860`. On Render (which sets
+`RENDER=true`) it binds `0.0.0.0` on the assigned `PORT`, so uploaded images are then processed on that remote
+server rather than on your device. Public share links are never created, Gradio analytics are disabled, and only
+system fonts are used, so there are no external font requests.
 
 ## 5. Architecture and data flow
 
@@ -289,8 +291,8 @@ path hasn't been re-verified.
 .venv/bin/python app/app.py
 ```
 
-Then open **http://127.0.0.1:7860**, and press Ctrl+C to stop. The app listens on 127.0.0.1 only, never
-creates a share link, and has Gradio analytics disabled.
+Then open **http://127.0.0.1:7860**, and press Ctrl+C to stop. Locally the app listens on 127.0.0.1 only. It
+never creates a share link, and Gradio analytics are disabled.
 
 ## 14. Running the automated tests
 
@@ -298,14 +300,14 @@ creates a share link, and has Gradio analytics disabled.
 .venv/bin/python -m pytest tests/test_app_inference.py -v
 ```
 
-There are 33 tests, covering:
+There are 38 tests, covering:
 - model integrity (including a tampered-model test)
 - feature order, and exact parity with the saved held-out predictions
 - rejection of malformed and unsupported files, and out-of-range warnings
 - transparency preservation through a real local upload
 - dashboard values read from the result files, with test and CV results kept separate
 - the disclaimer and the wording that the score is not a probability
-- local-only launch settings
+- launch settings (local by default; no share links)
 - no modification of research artifacts
 
 Tests that need the local dataset artifacts are skipped automatically when those files are absent.
@@ -349,6 +351,6 @@ Tests that need the local dataset artifacts are skipped automatically when those
 
 - **ML experiments:** complete. The model search is closed.
 - **Primary model:** Logistic Regression. Extra Trees is the experimental candidate.
-- **Application:** working locally, with 33 automated tests.
+- **Application:** working locally, with 38 automated tests.
 - **Research status:** experimental prototype; **not clinically validated**.
 - **Outstanding:** dataset licence verification; independent validation data.
