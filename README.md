@@ -67,15 +67,23 @@ The local Gradio app has four tabs:
 
 | Tab | Purpose |
 |---|---|
-| **Analyse** | Upload a pre-segmented conjunctiva crop (transparent-background PNG). The app validates it, extracts the 35 colour features, applies the saved Logistic Regression model, and explains the research classification in plain language. Technical details are in a collapsed section. |
-| **Examples** | Synthetic, code-generated images showing accepted, rejected and out-of-range inputs. No dataset images are shown, because the dataset's licence and sharing permissions are unresolved. |
-| **Performance** | Held-out test results and cross-validation results, in separate sections. Every figure is read at runtime from the aggregate files in `outputs/`. |
-| **Limitations** | What the prototype cannot do and why. |
+| **Analyse** | Upload a pre-segmented conjunctiva crop (transparent-background PNG). The app validates it, extracts the 35 colour features, applies the saved Logistic Regression model, and explains the output in plain language. **Try the demo** loads a synthetic test image into the same workflow, so first-time users can run the real pipeline without preparing an image. |
+| **Examples** | Synthetic, code-generated images showing accepted, rejected and out-of-range inputs. Each states its expected behaviour and is compared with what actually happened. No dataset images are shown, because the dataset's licence and sharing permissions are unresolved. |
+| **Performance** | Held-out test results, the model-selection rationale and cross-validation results, in separate sections. Every figure is read at runtime from the aggregate files in `outputs/`. |
+| **Limitations** | Data, model, input and clinical limitations. |
 
-A result reads, for example, "**Resembles the dataset's anaemic-labelled examples**" or "**Did not cross
-the research threshold**". It's followed by a recommended next step (a blood test if anaemia is a concern),
-the model score with the note *"not a calibrated probability of anaemia"*, a description of the features,
-and the limitations of the result.
+A result is shown in four parts:
+1. **Model output:** the predicted dataset label (for example, "Resembles the dataset's anaemic-labelled
+   examples" or "Did not cross the research threshold"), marked as not a medical diagnosis, plus the model
+   score with the note *"not a calibrated probability of anaemia"*.
+2. **Plain-English explanation:** what the output means, the feature groups used, and the recommended next
+   step (a blood test if anaemia is a concern).
+3. **Input warnings:** whether the image falls outside the training data's ranges.
+4. **Technical details:** in a collapsed section.
+
+Synthetic test images (the demo and the Examples tab) are recognised by their file contents. They show the
+actual model output in neutral wording ("Score above/below the research threshold"), without a dataset label,
+because a code-generated image has no medical meaning.
 
 ## 4. How the application works
 

@@ -357,3 +357,37 @@ def test_dashboard_leads_with_test_metrics_read_from_files():
     assert html_out.index("Held-out test results") < html_out.index("Cross-validation")
     assert "Training data only" in html_out and "not test results" in html_out
     assert "do not establish clinical performance" in html_out
+
+
+# --- guided demo (synthetic examples through the real pipeline) ---------------
+
+def test_demo_example_exists_and_passes_validation(tmp_path):
+    examples = app.make_synthetic_examples(tmp_path)
+    assert app.DEMO_EXAMPLE in examples
+    assert inference.validate_png(examples[app.DEMO_EXAMPLE][0])[0] == []
+
+
+def test_demo_runs_actual_inference_with_neutral_synthetic_wording(tmp_path):
+    examples = app.make_synthetic_examples(tmp_path)
+    hashes = frozenset(inference.sha256_file(p) for p, _ in examples.values())
+    path = examples[app.DEMO_EXAMPLE][0]
+    _, card, tech, details = app.make_handler(app.load_results(), hashes)(path)
+    direct = inference.analyse(path)
+    assert details["probability"] == direct.probability            # the real model output, not simulated
+    assert details["above_threshold"] == direct.above_threshold
+    assert details["warnings"] == direct.warnings
+    text = visible_text(card)
+    assert "Synthetic" in text and "not medical performance" in text
+    assert app.r3(direct.probability) in text and "Model score" in text
+    assert "anaemic-labelled examples" not in text and "Did not cross" not in text   # no dataset/medical label
+    assert app.r3(direct.threshold) in visible_text(tech)
+
+
+def test_synthetic_detection_uses_content_not_filename(tmp_path):
+    examples = app.make_synthetic_examples(tmp_path / "ex")
+    hashes = frozenset(inference.sha256_file(p) for p, _ in examples.values())
+    renamed = tmp_path / "valid.png"                                # same name as a synthetic example
+    crop_png(renamed, w=230, h=90, seed=7)
+    assert not app.is_synthetic(str(renamed), hashes)
+    real_style = visible_text(app.make_handler(app.load_results(), hashes)(str(renamed))[1])
+    assert "Synthetic" not in real_style and ("anaemic-labelled" in real_style or "Did not cross" in real_style)
