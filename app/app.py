@@ -501,6 +501,9 @@ def example_verdict(label, details):
     warnings = details.get("warnings") or []
     if details.get("status") == "rejected":
         observed, ok = "Rejected before analysis.", expected == "rejected"
+    elif details.get("status") == "validated":
+        observed = "Passed input validation (model analysis is not available in this hosted version)."
+        ok = expected in ("accepted", "warned")
     elif warnings:
         observed = f"Accepted, with {len(warnings)} out-of-range warning(s)."
         ok = expected in ("warned", "accepted")
@@ -838,6 +841,9 @@ button:focus-visible, [role="tab"]:focus-visible, input:focus-visible, select:fo
 .p-ok span { color: var(--c-text); }
 .p-reasons { margin: var(--s-1) 0 var(--s-2); padding-left: var(--s-3); font-size: var(--fs-body); line-height: var(--lh-body); color: var(--c-text); }
 .p-result.is-rejected h3 { margin-bottom: var(--s-1); }
+.p-result.is-validated .p-dot { background: var(--c-ok); }
+.p-unavailable { max-width: 760px; border-left: 3px solid var(--c-accent); }
+.p-unavailable p:not(.p-state-title) { margin: var(--s-1) 0 0; font-size: var(--fs-body); line-height: var(--lh-body); color: var(--c-muted); }
 .p-reliability { margin-top: var(--s-3); padding-top: var(--s-2); border-top: 1px solid var(--c-line); }
 .p-footnote { display: flex; gap: var(--s-1); margin: var(--s-2) 0 0; font-size: var(--fs-cap); line-height: var(--lh-body); color: var(--c-muted); }
 .p-footnote .p-icon { width: 14px; height: 14px; }
@@ -990,22 +996,83 @@ def idle_state(label):
     return gr.update(value=label, interactive=True)
 
 
-def build_app(results=None, example_dir=None):
-    results = results or load_results()
+# --- Hosted build without the model --------------------------------------------
+
+def research_artifacts():
+    """Files the trained model, its integrity check and its warning ranges need (all gitignored)."""
+    return [inference.MODEL_PATH, inference.SNAPSHOT_SUMS] + [
+        inference.DERIVED / n for n in ("split.csv", "split.lock", "manifest.csv", "features.csv")]
+
+
+def model_available():
+    """True when the research artifacts are present and pass the strict integrity checks.
+
+    False only when every artifact is absent: the hosted build, which deliberately excludes the model because
+    its redistribution permission is unresolved. A partial set still goes through the strict loaders and
+    raises, so the integrity check is never skipped or weakened.
+    """
+    if not any(p.exists() for p in research_artifacts()):
+        return False
     inference.default_model()       # fail fast on integrity problems
     inference.default_reference()
+    return True
+
+
+MODEL_UNAVAILABLE_CARD = (
+    '<div class="p-card p-unavailable" role="status"><p class="p-state-title">Image analysis is not available in this '
+    'hosted version</p><p>The trained model comes from a research dataset whose redistribution licence has not been '
+    'confirmed, so it is not published with this public build. Image analysis runs only in the local research '
+    'version.</p><p>You can still explore the research results in <strong>Performance</strong>, see how input '
+    'validation works in <strong>Examples</strong>, and read the <strong>Limitations</strong>.</p></div>')
+
+
+def make_validation_only_runner(examples):
+    """Examples in the hosted build: the real input validation only (it needs no model). No score is produced."""
+    def run(label):
+        path = examples[label][0]
+        reasons, info = inference.validate_png(path)
+        if reasons:
+            rejected = inference.AnalysisResult(status="rejected", reasons=reasons, info=info)
+            details = rejected.as_dict()
+            return (gr.update(value=None, visible=False),
+                    example_verdict(label, details) + format_result(rejected, None, synthetic=True),
+                    format_technical(rejected, path), details)
+        details = {"status": "validated", "reasons": [], "warnings": [], "probability": None,
+                   "threshold": None, "above_threshold": None, "info": info}
+        card = (f'<div class="p-card p-result is-validated" role="status" aria-live="polite">{SYNTHETIC_BANNER}'
+                '<div class="p-status"><span class="p-dot" aria-hidden="true"></span><span class="p-eyebrow">Input '
+                'validation</span></div><h3>Passed input validation</h3><p class="p-label-note">The image meets the '
+                'input requirements. Model analysis is not available in this hosted version, so no model score or '
+                f'training-range warnings are produced here.</p>{footnote()}</div>')
+        rows = [("Image size", f"{info['width']} × {info['height']} px"), ("Colour mode", info["mode"]),
+                ("Visible tissue pixels", f"{info['n_opaque_px']:,}"),
+                ("Transparent background", f"{info['transparent_fraction'] * 100:.1f}% of the image")]
+        tech = ('<div class="p-tech"><table>' + "".join(f"<tr><th>{esc(k)}</th><td>{esc(v)}</td></tr>" for k, v in rows)
+                + '</table><p class="p-muted">Validation only: the model is not part of this hosted build.</p></div>')
+        return (gr.update(value=inference.preview_image(path), visible=True),
+                example_verdict(label, details) + card, tech, details)
+    return run
+
+
+def build_app(results=None, example_dir=None):
+    results = results or load_results()
+    available = model_available()   # strict integrity checks whenever the research artifacts are present
     example_dir = example_dir or tempfile.mkdtemp(prefix="pallor_synthetic_")
     examples = make_synthetic_examples(example_dir)
     synthetic_hashes = frozenset(inference.sha256_file(p) for p, _ in examples.values())
     handle = make_handler(results, synthetic_hashes)
     on_upload = make_upload_handler(results, synthetic_hashes)
-    n_features = len(inference.default_model()["feature_names"])
-    first_example = next(iter(examples))
     demo_path = examples[DEMO_EXAMPLE][0]
+    n_features = (len(inference.default_model()["feature_names"]) if available
+                  else len(inference.features.extract(demo_path)))
+    first_example = next(iter(examples))
 
     def run_example(label):
         preview, card, tech, details = handle(examples[label][0])
         return preview, example_verdict(label, details) + card, tech, details
+
+    if not available:
+        run_example = make_validation_only_runner(examples)
 
     with gr.Blocks(title="Pallor — conjunctiva colour research", analytics_enabled=False,
                    delete_cache=(3600, 3600)) as demo:
@@ -1018,52 +1085,56 @@ def build_app(results=None, example_dir=None):
                 gr.HTML('<header class="p-intro"><h1>Explore conjunctiva colour patterns</h1><p>Pallor analyses colour '
                         'features in a supported conjunctiva image and compares them with patterns learned from a '
                         'research dataset.</p><p class="p-cannot">It cannot diagnose anaemia or measure haemoglobin.</p>'
-                        '</header><ol class="p-steps">'
-                        '<li class="is-first"><span class="p-step-num">01</span><span class="p-step-title">Upload an image</span>'
-                        '<p>A pre-segmented conjunctiva crop saved as a transparent-background PNG, or try the synthetic demo.</p></li>'
-                        '<li><span class="p-step-num">02</span><span class="p-step-title">Analyse colour features</span>'
-                        f'<p>Pallor checks the image and measures {n_features} colour features from the visible tissue.</p></li>'
-                        '<li><span class="p-step-num">03</span><span class="p-step-title">Review the model output</span>'
-                        '<p>See the predicted dataset label, what it means and any input warnings.</p></li></ol>')
-                with gr.Row(equal_height=False, elem_id="p-analyse-row"):
-                    with gr.Column(scale=5, min_width=300, elem_id="p-upload-col"):
-                        with gr.Column(elem_id="p-demo-offer") as demo_offer:
-                            gr.HTML('<p class="p-panel-title">New to Pallor?</p><p class="p-panel-text">Run the real '
-                                    'pipeline on a synthetic test image. No image of your own is needed.</p>')
-                            try_demo = gr.Button("Try the demo", variant="secondary", elem_id="p-try-demo", size="md")
-                        with gr.Column(elem_id="p-demo-note", visible=False) as demo_note:
-                            gr.HTML('<p class="p-panel-title"><span class="p-tag">Synthetic</span> Demo image loaded</p>'
-                                    '<p class="p-panel-text">A code-generated test image, not a real conjunctiva. It '
-                                    'demonstrates software behaviour, not medical performance.</p>')
-                            exit_demo = gr.Button("Use my own image instead", variant="secondary",
-                                                  elem_id="p-exit-demo", size="md")
-                        gr.HTML('<p class="p-panel-title p-upload-title">Upload an image</p><ul class="p-req">'
-                                '<li><span><strong>Supported:</strong> a pre-segmented conjunctiva crop (inner-eyelid '
-                                'tissue only) saved as a PNG with a transparent background.</span></li>'
-                                '<li class="no"><span><strong>Not supported:</strong> ordinary photographs, JPEGs, selfies '
-                                'and unsegmented eye images.</span></li></ul>')
-                        upload = gr.File(label="Conjunctiva PNG", file_types=[".png"], file_count="single",
-                                         type="filepath", elem_id="p-upload", height=120)
-                        preview = gr.Image(label="Preview", show_label=False, interactive=False, height=120,
-                                           elem_id="p-preview", buttons=[], visible=False)
-                        status = gr.HTML('<p class="p-upload-status">No image selected.</p>')
-                        run = gr.Button("Analyse image", variant="primary", elem_id="p-analyse", interactive=False)
-                    with gr.Column(scale=7, min_width=320, elem_id="p-result-col"):
-                        result_card = gr.HTML(placeholder_card())
-                        with gr.Accordion("Technical details", open=False, elem_id="p-tech-acc"):
-                            tech = gr.HTML(TECH_PLACEHOLDER)
-                details = gr.JSON(visible=False)  # raw result for the API; never displayed
-                upload.change(on_upload, inputs=upload,
-                              outputs=[status, preview, run, result_card, tech, details, demo_note, demo_offer],
-                              api_visibility="private")
-                # Demo: load an approved synthetic example into the normal upload flow (real validation and inference).
-                try_demo.click(lambda: demo_path, outputs=upload, api_visibility="private")
-                exit_demo.click(lambda: None, outputs=upload, api_visibility="private")
-                # Visible loading state, then the real analysis, then restore the button and bring the result into view.
-                run.click(busy_state, outputs=[run, result_card], api_visibility="private").then(
-                    handle, inputs=upload, outputs=[preview, result_card, tech, details], api_name="analyse"
-                ).then(lambda: idle_state("Analyse image"), outputs=run, api_visibility="private").then(
-                    None, js=SCROLL_TO_RESULT_JS, api_visibility="private")
+                        '</header>')
+                if available:
+                    gr.HTML('<ol class="p-steps">'
+                            '<li class="is-first"><span class="p-step-num">01</span><span class="p-step-title">Upload an image</span>'
+                            '<p>A pre-segmented conjunctiva crop saved as a transparent-background PNG, or try the synthetic demo.</p></li>'
+                            '<li><span class="p-step-num">02</span><span class="p-step-title">Analyse colour features</span>'
+                            f'<p>Pallor checks the image and measures {n_features} colour features from the visible tissue.</p></li>'
+                            '<li><span class="p-step-num">03</span><span class="p-step-title">Review the model output</span>'
+                            '<p>See the predicted dataset label, what it means and any input warnings.</p></li></ol>')
+                    with gr.Row(equal_height=False, elem_id="p-analyse-row"):
+                        with gr.Column(scale=5, min_width=300, elem_id="p-upload-col"):
+                            with gr.Column(elem_id="p-demo-offer") as demo_offer:
+                                gr.HTML('<p class="p-panel-title">New to Pallor?</p><p class="p-panel-text">Run the real '
+                                        'pipeline on a synthetic test image. No image of your own is needed.</p>')
+                                try_demo = gr.Button("Try the demo", variant="secondary", elem_id="p-try-demo", size="md")
+                            with gr.Column(elem_id="p-demo-note", visible=False) as demo_note:
+                                gr.HTML('<p class="p-panel-title"><span class="p-tag">Synthetic</span> Demo image loaded</p>'
+                                        '<p class="p-panel-text">A code-generated test image, not a real conjunctiva. It '
+                                        'demonstrates software behaviour, not medical performance.</p>')
+                                exit_demo = gr.Button("Use my own image instead", variant="secondary",
+                                                      elem_id="p-exit-demo", size="md")
+                            gr.HTML('<p class="p-panel-title p-upload-title">Upload an image</p><ul class="p-req">'
+                                    '<li><span><strong>Supported:</strong> a pre-segmented conjunctiva crop (inner-eyelid '
+                                    'tissue only) saved as a PNG with a transparent background.</span></li>'
+                                    '<li class="no"><span><strong>Not supported:</strong> ordinary photographs, JPEGs, selfies '
+                                    'and unsegmented eye images.</span></li></ul>')
+                            upload = gr.File(label="Conjunctiva PNG", file_types=[".png"], file_count="single",
+                                             type="filepath", elem_id="p-upload", height=120)
+                            preview = gr.Image(label="Preview", show_label=False, interactive=False, height=120,
+                                               elem_id="p-preview", buttons=[], visible=False)
+                            status = gr.HTML('<p class="p-upload-status">No image selected.</p>')
+                            run = gr.Button("Analyse image", variant="primary", elem_id="p-analyse", interactive=False)
+                        with gr.Column(scale=7, min_width=320, elem_id="p-result-col"):
+                            result_card = gr.HTML(placeholder_card())
+                            with gr.Accordion("Technical details", open=False, elem_id="p-tech-acc"):
+                                tech = gr.HTML(TECH_PLACEHOLDER)
+                    details = gr.JSON(visible=False)  # raw result for the API; never displayed
+                    upload.change(on_upload, inputs=upload,
+                                  outputs=[status, preview, run, result_card, tech, details, demo_note, demo_offer],
+                                  api_visibility="private")
+                    # Demo: load an approved synthetic example into the normal upload flow (real validation and inference).
+                    try_demo.click(lambda: demo_path, outputs=upload, api_visibility="private")
+                    exit_demo.click(lambda: None, outputs=upload, api_visibility="private")
+                    # Visible loading state, then the real analysis, then restore the button and bring the result into view.
+                    run.click(busy_state, outputs=[run, result_card], api_visibility="private").then(
+                        handle, inputs=upload, outputs=[preview, result_card, tech, details], api_name="analyse"
+                    ).then(lambda: idle_state("Analyse image"), outputs=run, api_visibility="private").then(
+                        None, js=SCROLL_TO_RESULT_JS, api_visibility="private")
+                else:
+                    gr.HTML(MODEL_UNAVAILABLE_CARD)
 
             with gr.Tab("Examples"):
                 gr.HTML('<header class="p-intro"><h2>Research example explorer</h2><p>Synthetic test images show how '

@@ -294,13 +294,28 @@ path hasn't been re-verified.
 Then open **http://127.0.0.1:7860**, and press Ctrl+C to stop. Locally the app listens on 127.0.0.1 only. It
 never creates a share link, and Gradio analytics are disabled.
 
+### Hosted build (for example Render)
+
+The trained model and the research files it needs are not in this repository, because the dataset's
+redistribution licence is unconfirmed. A deployed copy therefore starts with **image analysis turned off**:
+- the Analyse tab explains this, and offers no image upload
+- Examples run the real input validation only, with no model score
+- Performance and Limitations work as usual
+
+When those files are present (the local research build), the app loads the model with its full integrity check.
+A partial set, such as a model without its checksum, refuses to start.
+
+Render settings: Build Command `pip install -r requirements-deploy.txt`, Start Command `python app/app.py`, and
+environment variable `PYTHON_VERSION=3.13.15`. Render sets `RENDER=true` and `PORT` itself, which makes the app
+bind `0.0.0.0` on that port. Health check path: `/gradio_api/startup-events`.
+
 ## 14. Running the automated tests
 
 ```bash
 .venv/bin/python -m pytest tests/test_app_inference.py -v
 ```
 
-There are 38 tests, covering:
+There are 41 tests, covering:
 - model integrity (including a tampered-model test)
 - feature order, and exact parity with the saved held-out predictions
 - rejection of malformed and unsupported files, and out-of-range warnings
@@ -351,6 +366,6 @@ Tests that need the local dataset artifacts are skipped automatically when those
 
 - **ML experiments:** complete. The model search is closed.
 - **Primary model:** Logistic Regression. Extra Trees is the experimental candidate.
-- **Application:** working locally, with 38 automated tests.
+- **Application:** working locally, with 41 automated tests.
 - **Research status:** experimental prototype; **not clinically validated**.
 - **Outstanding:** dataset licence verification; independent validation data.

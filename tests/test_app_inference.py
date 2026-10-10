@@ -407,3 +407,55 @@ def test_launch_settings_on_render_bind_all_interfaces_without_share():
     assert (render["server_name"], render["server_port"], render["share"]) == ("0.0.0.0", 10000, False)
     assert render["enable_monitoring"] is False and render["mcp_server"] is False
     assert app.launch_settings({"RENDER": "false"})["server_name"] == "127.0.0.1"
+
+
+# --- hosted build without the model (inference off) ---------------------------
+
+@pytest.fixture
+def hosted_build(tmp_path, monkeypatch):
+    """Point the app at an empty checkout: no model, checksum or derived files (like the hosted build)."""
+    monkeypatch.setattr(inference, "MODEL_PATH", tmp_path / "models" / "classifier.joblib")
+    monkeypatch.setattr(inference, "SNAPSHOT_SUMS", tmp_path / "outputs" / "baseline_colour" / "SHA256SUMS")
+    monkeypatch.setattr(inference, "DERIVED", tmp_path / "derived")
+    inference.default_model.cache_clear(); inference.default_reference.cache_clear()
+    yield tmp_path
+    inference.default_model.cache_clear(); inference.default_reference.cache_clear()
+
+
+def test_hosted_build_starts_with_inference_off(hosted_build):
+    assert app.model_available() is False
+    demo = app.build_app(example_dir=hosted_build / "ex")
+    names = [d.get("api_name") for d in demo.config["dependencies"] if d.get("api_visibility") == "public"]
+    assert "analyse" not in names and "synthetic_example" in names     # no image-analysis endpoint at all
+    html = " ".join(b.value for b in demo.blocks.values() if type(b).__name__ == "HTML" and isinstance(b.value, str))
+    assert "Image analysis is not available in this hosted version" in html
+
+
+def test_hosted_build_examples_run_real_validation_without_scores(hosted_build):
+    examples = app.make_synthetic_examples(hosted_build / "ex")
+    run = app.make_validation_only_runner(examples)
+    _, card, _, details = run("No transparency (plain RGB PNG)")
+    assert details["status"] == "rejected" and "Behaves as designed" in visible_text(card)
+    _, card, _, details = run(app.DEMO_EXAMPLE)
+    text = visible_text(card)
+    assert details["status"] == "validated" and details["probability"] is None
+    assert "Passed input validation" in text and "Model score" not in text and "Behaves as designed" in text
+
+
+def test_partial_artifacts_still_fail_integrity_strictly(tmp_path, monkeypatch):
+    """A model without its checksum must not load (integrity is never skipped)."""
+    model_copy = tmp_path / "classifier.joblib"
+    model_copy.write_bytes(inference.MODEL_PATH.read_bytes())
+    missing_sums = tmp_path / "missing" / "SHA256SUMS"
+    monkeypatch.setattr(inference, "MODEL_PATH", model_copy)
+    monkeypatch.setattr(inference, "SNAPSHOT_SUMS", missing_sums)
+    monkeypatch.setattr(inference, "DERIVED", tmp_path / "derived")
+    # load_model / expected_model_sha256 bind their paths as defaults at import, so redirect those too
+    monkeypatch.setattr(inference.load_model, "__defaults__", (model_copy, None))
+    monkeypatch.setattr(inference.expected_model_sha256, "__defaults__", (missing_sums,))
+    inference.default_model.cache_clear(); inference.default_reference.cache_clear()
+    try:
+        with pytest.raises(FileNotFoundError):
+            app.model_available()
+    finally:
+        inference.default_model.cache_clear(); inference.default_reference.cache_clear()
